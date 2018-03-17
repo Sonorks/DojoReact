@@ -5,20 +5,93 @@ import construirBaraja from './utils/construirBaraja';
 import Header from './Header';
 import Tablero from './Tablero';
 
+
 class App extends Component {
-  render() {
-    return (
+  constructor(props){
+    super(props);
+    this.state = getEstadoInicial();
+  }
+
+  render(){
+    return(
       <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
-        </header>
-        <p className="App-intro">
-         Jerson cacorro.
-        </p>
+        <Header
+        numeroDeIntentos = {this.state.numeroDeIntentos}
+        resetearPartida = {() => this.resetearPartida()}
+        />
+        <Tablero
+        baraja = {this.state.baraja}
+        parejaSeleccionada = {this.state.parejaSeleccionada}
+        seleccionarCarta = {(carta)=> this.seleccionarCarta(carta)}
+        />
       </div>
     );
   }
+
+  seleccionarCarta(carta){
+    if (this.state.estaComparando || this.state.parejaSeleccionada.indexOf(carta)>-1 || carta.fueAdivinada)
+    {
+      return;
+    }
+    const parejaSeleccionada = [...this.state.parejaSeleccionada, carta];
+    this.setState({
+      parejaSeleccionada
+    })
+
+    if(parejaSeleccionada.length === 2){
+      this.compararPareja(parejaSeleccionada)
+    }
+  }
+
+  compararPareja(parejaSeleccionada){
+    this.setState({estaComparando:true});
+    setTimeout(() => {
+      const [primeraCarta, segundaCarta] =parejaSeleccionada;
+      let baraja = this.state.baraja;
+
+      if(primeraCarta.icono === segundaCarta.icono){
+        baraja = baraja.map((carta) => {
+          if(carta.icono !== primeraCarta.icono){
+            return carta;
+          }
+          return {...carta, fueAdivinada:true}
+        });
+      }
+    
+    this.setState({
+      baraja,
+      estaComparando: false,
+      parejaSeleccionada: [],
+      numeroDeIntentos: this.state.numeroDeIntentos + 1
+    })
+    this.verificarSiHayGanador(baraja);
+    },1000);
+  }
+
+  verificarSiHayGanador(baraja){
+    if(baraja.filter((carta) => !carta.fueAdivinada).length === 0) {
+      alert (`Ganaste en ${this.state.numeroDeIntentos} intentos!`);
+    }
+  }
+
+  resetearPartida(){
+    this.setState(
+      getEstadoInicial()
+    );
+  }
 }
+
+
+
+const getEstadoInicial = () => {
+  const baraja = construirBaraja();
+  return{
+    baraja,
+    parejaSeleccionada: [],
+    estaComparando: false,
+    numeroDeIntentos: 0
+  };
+}
+
 
 export default App;
